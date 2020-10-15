@@ -1,3 +1,4 @@
 .ipynb_checkpoints
+__pycache__
 scrape/data/wiki/*
 !scrape/data/wiki/.gitkeep
