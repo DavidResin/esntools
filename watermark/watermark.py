@@ -53,18 +53,18 @@ color_choices = {
 
 # Setup argument parser
 ap = argparse.ArgumentParser(description="ESN Lausanne Watermark Inserter", formatter_class=argparse.RawTextHelpFormatter)
-ap.add_argument("-q",	"--quiet",			action="store_true",							help="silent running")
-ap.add_argument("-f",	"--flush",			action="store_true",							help="flush output folder")
-ap.add_argument("-k",	"--keep",			action="store_true",							help=f"keep original file format (if omitted, will default to { d_format.upper() } format)")
-ap.add_argument("-np",	"--no-prefix",		action="store_true",							help=f"do not add a '{ prefix }' prefix to outputs")
-ap.add_argument("-nr",	"--no-rotate",		action="store_true",							help=f"do not rotate images if they are not upright")
-ap.add_argument("-nc",	"--no-circle",		action="store_true",							help="do not add a colored circle behind the logo (not recommended)")
-ap.add_argument("-ss",  "--supersampling",	action="store", type=int,	default=d_ss,		help=f"set the supersampling factor for smoothing the circle (default is '{ d_ss }')")
-ap.add_argument("-i",	"--input",			action="store", type=str,	default=d_input,	help=f"set a custom input directory path (default is '{ d_input }')")
-ap.add_argument("-o",	"--output",			action="store", type=str,	default=d_output,	help=f"set a custom output directory path (default is '{ d_output }')")
-ap.add_argument("-s",	"--size",			action="store", type=float,	default=d_size,		help=f"set the ratio of the watermark's size compared to the image's size (default is { d_size })")
-ap.add_argument("-d",	"--distance",		action="store", type=float,	default=d_dist,		help=f"set the ratio of the watermark's padding to the size of the watermark (default is { d_dist })")
-ap.add_argument("-r",	"--radius",			action="store", type=float,	default=d_radius,	help=f"set the ratio of the circle's size compared to the logo's size (default is { d_radius })")
+ap.add_argument("-q",	"--quiet",			action="store_true",										help="silent running")
+ap.add_argument("-f",	"--flush",			action="store_true",										help="flush output folder")
+ap.add_argument("-k",	"--keep",			action="store_true",										help=f"keep original file format (if omitted, will default to { d_format.upper() } format)")
+ap.add_argument("-np",	"--no-prefix",		action="store_true",										help=f"do not add a '{ prefix }' prefix to outputs")
+ap.add_argument("-nr",	"--no-rotate",		action="store_true",										help=f"do not rotate images if they are not upright")
+ap.add_argument("-nc",	"--no-circle",		action="store_true",										help="do not add a colored circle behind the logo (not recommended)")
+ap.add_argument("-i",	"--input",			action="store", type=str,	default=d_input,				help=f"set a custom input directory path (default is '{ d_input }')")
+ap.add_argument("-o",	"--output",			action="store", type=str,	default=d_output,				help=f"set a custom output directory path (default is '{ d_output }')")
+ap.add_argument("-s",	"--size",			action="store", type=float,	default=d_size,					help=f"set the ratio of the watermark's size compared to the image's size (default is { d_size })")
+ap.add_argument("-d",	"--distance",		action="store", type=float,	default=d_dist,					help=f"set the ratio of the watermark's padding to the size of the watermark (default is { d_dist })")
+ap.add_argument("-r",	"--radius",			action="store", type=float,	default=d_radius,				help=f"set the ratio of the circle's size compared to the logo's size (default is { d_radius })")
+ap.add_argument("-ss",  "--supersampling",	action="store", type=int,	default=d_ss, metavar="FACTOR",	help=f"set the supersampling factor for smoothing the circle (default is { d_ss }, smaller means faster execution but less smoothing)")
 ap.add_argument("-c",	"--color",			action="store",
 											type=str,
 											default=list(color_choices.keys())[0],
