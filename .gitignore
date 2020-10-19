@@ -2,9 +2,13 @@
 .ipynb_checkpoints
 __pycache__
 
+# Keep all default directories
+!.gitkeep
+
 # Ignore all scraper output
 scrape/data/*
-!scrape/data/wiki/.gitkeep
 
-# Ignore all watermark output
+# Ignore all watermark images
+watermark/input/*
 watermark/output/*
+watermark/invalid/*
