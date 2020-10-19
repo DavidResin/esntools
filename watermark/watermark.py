@@ -232,4 +232,3 @@ for fn in fns:
 
 print()
 print(end_str.format(total) + (inv_str.format(invalid) if invalid else ""))
-print("NEED TO MODIFY THE LOGOS SO THAT THE MAIN TEXT IS VERTICALLY CENTERED")
