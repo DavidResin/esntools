@@ -1,4 +1,10 @@
+# Ignore all Python and Jupyter cache files
 .ipynb_checkpoints
 __pycache__
-scrape/data/wiki/*
+
+# Ignore all scraper output
+scrape/data/*
 !scrape/data/wiki/.gitkeep
+
+# Ignore all watermark output
+watermark/output/*
