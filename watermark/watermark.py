@@ -1,14 +1,14 @@
 ##################################################
 ##												##
-##   File : 	watermark.py 					##
-##   Author : 	David Resin, ESN EPFL 			##
-##   Date :   	24.05.2022						##
-##   Email :  	davidresin@citycable.ch 		##
-##   Repo :   	github.com/DavidResin/esntools	##
+##	File :		watermark.py					##
+##	Author :	David Resin, ESN EPFL			##
+##	Date :		24.05.2022						##
+##	Email :		davidresin@citycable.ch			##
+##	Repo :		github.com/DavidResin/esntools	##
 ##												##
 ## ============================================ ##
 ##												##
-##	 HOW TO RUN									##
+##	HOW TO RUN									##
 ##		1 - Install Python 3					##
 ##		2 - "cd path/to/the/watermark/folder"	##
 ##		3 - "pip install -r requirements.txt"	##
@@ -32,13 +32,16 @@ from helpers import *
 if __name__ == "__main__":
 
 	# Define default values
-	default_wm_size = 1 / 8
-	default_wm_ratio = 1.6
-	default_wm_padding = 0.15
-	default_ss = 8
-	default_input = "input"
-	default_output = "output"
-	default_format = "png"
+	default_vals = {
+		"ss": 			2,
+		"wm_size": 		1 / 8,
+		"wm_ratio": 	1.6,
+		"wm_pad": 		0.15,
+		"wm_prefix":	"wm_",
+		"input": 		"input",
+		"output": 		"output",
+		"format": 		"png"
+	}
 
 	# Other parameters
 	exts = ('.jpg', '.png', '.jpeg', '.ico', '.webp', '.heic')
@@ -46,10 +49,9 @@ if __name__ == "__main__":
 	proc_str = "Processing image {} of {} \t({} of {} variations, \tinvalid: {})"
 	end_str = "Processed {} images successfully!"
 	inv_str = " ({} image(s) failed and moved to 'invalid')"
-	wm_prefix = "wm_"
-	pos_choices = ["bottom_right", "bottom_left", "top_right", "top_left", "random", "all"]
 	path_inv = "invalid"
 	tilt_map = {0: 0, 1: 180, 2: 270, 3: 90}
+	pos_choices = ["bottom_right", "bottom_left", "top_right", "top_left", "random", "all"]
 	color_choices = {
 		"white": (255, 255, 255),
 		"black": (0, 0, 0),
@@ -71,10 +73,10 @@ if __name__ == "__main__":
 	}
 
 	# Setup argparser and parse arguments
-	ap = setup_argparser()
+	ap = setup_argparser(default_vals=default_vals, color_choices=color_choices, pos_choices=pos_choices)
 	args = vars(ap.parse_args())
 
-	prefix = 	wm_prefix * (not args["no_prefix"])
+	prefix = 	default_vals["wm_prefix"] * (not args["no_prefix"])
 	path_in = 	args["input"]
 	path_out = 	args["output"]
 	pos = 		args["position"]
@@ -152,11 +154,10 @@ if __name__ == "__main__":
 		# Randomize position if asked
 		pos_list = get_pos_list(pos)
 
+		print("Processing image", processed_count, "of", len(fns), "| Colors:", len(color_list), "| Variations:", len(pos_list), "| Invalid:", invalid_count, end="\r")
+
 		# Watermark picture
 		watermark_image(img, file_out, logos, ratios, pos_list, color_list, draw_circle=not args["no_circle"], center_circle=args["center_circle"])
 
+	print()
 	print("Done")
-
-	# BRING BACK INVALID TEXT + PUT IN INVALID FOLDER
-
-	# COMMENT EVERYTHING
