@@ -9,5 +9,5 @@ TODO
 
 # Credits
 
-© 2020 David Resin and other members of ESN Lausanne  
+© 2020-2022 David Resin and other members of ESN Lausanne  
 This project is freely available under a GNU GPLv3 license.
