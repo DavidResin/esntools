@@ -200,7 +200,6 @@ def watermark_image(img, file_out, logos, ratios, pos_list, color_list, draw_cir
 def setup_argparser(default_vals, color_choices, pos_choices):
 	ap = argparse.ArgumentParser(description="ESN Lausanne Watermark Inserter", formatter_class=argparse.RawTextHelpFormatter)
 	ap.add_argument("-f",	"--flush",				action="store_true",														help="flush output folder")
-	ap.add_argument("-k",	"--keep",				action="store_true",														help="keep original file format (if omitted, will default to {} format)".format(default_vals["format"].upper()))
 	ap.add_argument("-np",	"--no-prefix",			action="store_true",														help="do not add a '{}' prefix to outputs".format(default_vals["wm_prefix"]))
 	ap.add_argument("-nr",	"--no-rotate",			action="store_true",														help="do not rotate images if they are not upright")
 	ap.add_argument("-nc",	"--no-circle",			action="store_true",														help="do not add a colored circle behind the logo (not recommended)")

@@ -22,8 +22,8 @@ import random
 import sys
 
 # External libraries
-from PIL import Image, UnidentifiedImageError
-import pillow_heif as ph
+from PIL import Image, ImageSequence, UnidentifiedImageError
+from pillow_heif import register_heif_opener
 
 # Custom library
 from helpers import *
@@ -34,7 +34,7 @@ if __name__ == "__main__":
 	# Define default values
 	default_vals = {
 		"ss": 			2,
-		"wm_size": 		1 / 8,
+		"wm_size": 		0.07,
 		"wm_ratio": 	1.6,
 		"wm_pad": 		0.15,
 		"wm_prefix":	"wm_",
@@ -114,6 +114,9 @@ if __name__ == "__main__":
 	processed_count = 0
 	invalid_count = 0
 
+	# Enable the HEIF/HEIC Pillow plugin
+	register_heif_opener()
+
 	# Loop through images
 	for fn in fns:
 		processed_count += 1
@@ -127,33 +130,23 @@ if __name__ == "__main__":
 			invalid_count = invalidate(fn, file_in, path_inv, invalid_count)
 			continue
 
-		is_hei = False
-	
 		# Try to load image
-		if any([fn.lower().endswith(ext) for ext in preproc_exts]):
-			# Special formats
-			if not ph.is_supported(file_in):
-				invalid_count = invalidate(fn, file_in, path_inv, invalid_count)
-				continue
+		try:
+			img = Image.open(file_in)
+		except (FileNotFoundError, UnidentifiedImageError, ValueError) as e:
+			invalid_count = invalidate(fn, file_in, path_inv, invalid_count)
+			continue
 
+		is_hei = False
+
+		# Handle special formats
+		if any([fn.lower().endswith(ext) for ext in preproc_exts]):
 			is_hei = True
-			heif_file = ph.read(file_in)
-			img = Image.frombytes(heif_file.mode, heif_file.size, heif_file.data, "raw", heif_file.mode, heif_file.stride)
-			fn = fn.rsplit(".", maxsplit=1)[0] + "." + default_vals["format"]
-		else:
-			try:
-				img = Image.open(file_in)
-			except (FileNotFoundError, UnidentifiedImageError, ValueError) as e:
-				invalid_count = invalidate(fn, file_in, path_inv, invalid_count)
-				continue
+			img = next(ImageSequence.Iterator(img))
 		
 		# For non-HEI file types, try to re-orient the picture if it is allowed and orientation data is available 
 		if not is_hei and not args["no_rotate"] and img._getexif():
 			img = tilt_img(img, tilt_map)
-		
-		# Unify format if asked to or if format is HEI
-		if is_hei or not args["keep"]:
-			file_out[1] = default_vals["format"]
 		
 		# Choose a color for the 'random' case
 		if args["color"] == "random":
