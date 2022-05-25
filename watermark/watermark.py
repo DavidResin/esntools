@@ -104,8 +104,6 @@ if __name__ == "__main__":
 		create_dir_if_missing(default_vals["input"])
 		sys.exit("Input folder not found. Make sure you arguments are correct or use the default '" + default_vals["input"] + "' folder.")
 
-	img_total = len(fns)
-
 	# Flush all images in the output directory if asked to
 	if args["flush"]:
 		flush_output(path_out, exts)
