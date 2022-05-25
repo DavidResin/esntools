@@ -23,7 +23,7 @@ import sys
 
 # External libraries
 from PIL import Image, UnidentifiedImageError
-import pillow_heif
+import pillow_heif as ph
 
 # Custom library
 from helpers import *
@@ -44,8 +44,8 @@ if __name__ == "__main__":
 	}
 
 	# Other parameters
-	exts = ('.jpg', '.png', '.jpeg', '.ico', '.webp', '.heic')
-	preproc_exts = ('.heic')
+	exts = ('.jpg', '.png', '.jpeg', '.ico', '.webp', '.heic', '.heif')
+	preproc_exts = ('.heic', '.heif')
 	proc_str = "Processing image {} of {} \t({} of {} variations, \tinvalid: {})"
 	end_str = "Processed {} images successfully!"
 	inv_str = " ({} image(s) failed and moved to 'invalid')"
@@ -101,8 +101,8 @@ if __name__ == "__main__":
 	try:
 		fns = [el for el in os.listdir(path_in) if el != ".gitkeep"]
 	except:
-		create_dir_if_missing(default_input)
-		sys.exit("Input folder not found. Make sure you arguments are correct or use the default '" + default_input + "' folder.")
+		create_dir_if_missing(default_vals["input"])
+		sys.exit("Input folder not found. Make sure you arguments are correct or use the default '" + default_vals["input"] + "' folder.")
 
 	img_total = len(fns)
 
@@ -114,6 +114,7 @@ if __name__ == "__main__":
 	processed_count = 0
 	invalid_count = 0
 
+	# Loop through images
 	for fn in fns:
 		processed_count += 1
 		
@@ -125,13 +126,20 @@ if __name__ == "__main__":
 		if not any([fn.lower().endswith(ext) for ext in exts]):
 			invalid_count = invalidate(fn, file_in, path_inv, invalid_count)
 			continue
+
+		is_hei = False
 	
 		# Try to load image
 		if any([fn.lower().endswith(ext) for ext in preproc_exts]):
 			# Special formats
-			heif_file = pillow_heif.read_heif(file_in)
-			img = Image.frombytes(heif_file.mode, heif_file.size, heif_file.data, "raw")
-			fn = fn.rsplit(".", maxsplit=1)[0] + "." + default_format
+			if not ph.is_supported(file_in):
+				invalid_count = invalidate(fn, file_in, path_inv, invalid_count)
+				continue
+
+			is_hei = True
+			heif_file = ph.read(file_in)
+			img = Image.frombytes(heif_file.mode, heif_file.size, heif_file.data, "raw", heif_file.mode, heif_file.stride)
+			fn = fn.rsplit(".", maxsplit=1)[0] + "." + default_vals["format"]
 		else:
 			try:
 				img = Image.open(file_in)
@@ -139,13 +147,13 @@ if __name__ == "__main__":
 				invalid_count = invalidate(fn, file_in, path_inv, invalid_count)
 				continue
 		
-		# Unify format if asked to
-		if args["keep"]:
-			file_out[1] = default_format
-
-		# Try to re-orient the picture if it is allowed and orientation data is available 
-		if not args["no_rotate"] and img._getexif():
+		# For non-HEI file types, try to re-orient the picture if it is allowed and orientation data is available 
+		if not is_hei and not args["no_rotate"] and img._getexif():
 			img = tilt_img(img, tilt_map)
+		
+		# Unify format if asked to or if format is HEI
+		if is_hei or not args["keep"]:
+			file_out[1] = default_vals["format"]
 		
 		# Choose a color for the 'random' case
 		if args["color"] == "random":
