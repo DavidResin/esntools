@@ -151,7 +151,7 @@ if __name__ == "__main__":
 			color_list = [random.choice(list(color_choices.values()))]
 			
 		# Randomize position if asked
-		pos_list = get_pos_list(pos)
+		pos_list = get_pos_list(pos, pos_choices)
 
 		print("Processing image", processed_count, "of", len(fns), "| Colors:", len(color_list), "| Variations:", len(pos_list), "| Invalid:", invalid_count, end="\r")
 

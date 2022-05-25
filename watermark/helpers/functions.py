@@ -63,7 +63,7 @@ def invalidate(fn, img_path, path_inv, invalid_count):
 	return invalid_count + 1
 
 # Generate list of positions based on arguments
-def get_pos_list(pos):
+def get_pos_list(pos, pos_choices):
 	if pos == "random":
 		ret = [pos_choices[random.randint(0, 3)]]
 	elif pos == "all":
