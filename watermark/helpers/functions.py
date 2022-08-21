@@ -22,7 +22,8 @@ import sys
 import textwrap
 
 # External library
-from PIL import ImageColor, ImageDraw, ExifTags
+from PIL import ImageColor, ImageDraw
+from PIL.ExifTags import TAGS
 
 # Color parsing
 def parse_color(args, color_choices):
@@ -46,8 +47,19 @@ def create_dir_if_missing(path):
 		os.makedirs(path)
 
 # Auromatically tilt an image based on its EXIF data
-def tilt_img(img, tilt_map):
-	tilt = dict((ExifTags.TAGS[k], v) for k, v in img._getexif().items() if k in ExifTags.TAGS).get('Orientation')
+def tilt_img(img):
+	tilt = dict((TAGS[k], v) for k, v in img._getexif().items() if k in TAGS).get('Orientation')
+
+	if tilt is None:
+		return img
+
+	tilt_map = {
+		0: 0,
+		1: 180,
+		2: 270,
+		3: 90
+	}
+	
 	tilt_idx = tilt_map[(tilt - 1) // 2]
 	return img.rotate(tilt_idx, expand=True)
 

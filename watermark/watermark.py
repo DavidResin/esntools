@@ -50,7 +50,6 @@ if __name__ == "__main__":
 	end_str = "Processed {} images successfully!"
 	inv_str = " ({} image(s) failed and moved to 'invalid')"
 	path_inv = "invalid"
-	tilt_map = {0: 0, 1: 180, 2: 270, 3: 90}
 	pos_choices = ["bottom_right", "bottom_left", "top_right", "top_left", "random", "all"]
 	color_choices = {
 		"white": (255, 255, 255),
@@ -144,7 +143,7 @@ if __name__ == "__main__":
 		
 		# For non-HEI file types, try to re-orient the picture if it is allowed and orientation data is available 
 		if not is_hei and not args["no_rotate"] and img._getexif():
-			img = tilt_img(img, tilt_map)
+			img = tilt_img(img)
 		
 		# Choose a color for the 'random' case
 		if args["color"] == "random":
