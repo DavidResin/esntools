@@ -1,6 +1,9 @@
 # External libraries
 from PIL import ImageDraw
 
+# Custom libraries
+from helpers.others import get_any_dict_value, get_dict_value_or_none_value, color_list_from_setting
+
 TILT_MAP = {
 	0: 0,
 	1: 180,
@@ -9,6 +12,11 @@ TILT_MAP = {
 }
 
 EXIF_ORIENTATION_TAG = 274
+
+ESN_CIRCLE_COLOR_MAP = {
+	"white": "color",
+	None: "white",
+}
 
 # Auromatically tilt an image based on its EXIF data
 def tilt_img(image):
@@ -26,39 +34,32 @@ def tilt_img(image):
 	return image.rotate(tilt_idx, expand=True)
 
 def logo_dims_from_image_and_ratio(logo_size, image_size, image_watermark_ratio):
-    image_w, image_h = image_size
-    src_logo_w, src_logo_h = logo_size
+	image_w, image_h = image_size
+	src_logo_w, src_logo_h = logo_size
 
-    # TODO : Make this configurable (h or w)
-    tgt_logo_h = image_watermark_ratio * min(image_h, image_w)
-    tgt_logo_w = tgt_logo_h / src_logo_h * src_logo_w
+	# TODO : Make this configurable (h or w)
+	tgt_logo_h = image_watermark_ratio * min(image_h, image_w)
+	tgt_logo_w = tgt_logo_h / src_logo_h * src_logo_w
 
-    return tgt_logo_w, tgt_logo_h
+	return tgt_logo_w, tgt_logo_h
 
-def scale_logos_with_supersampling(logos, target_dims, color_list, supersampling_factor):
-    supersampled_dims = [int(supersampling_factor * dim) for dim in target_dims]
-    logos_scaled = dict()
-
-    for key, logo in logos.items():
-        # Do not process logo if it will not be used
-        if key in color_list:
-            logos_scaled[key] = logo.resize(supersampled_dims)
-
-    return logos_scaled
+def scale_logos_with_supersampling(logos, target_dims, supersampling_factor):
+	supersampled_dims = [int(supersampling_factor * dim) for dim in target_dims]
+	return {key: logo.resize(supersampled_dims) for key, logo in logos.items()}
 
 # TODO : SEPARATE THE WATERMARK CANVAS CREATION FROM THE WATERMARKING PROCESS
 
 # TODO : Remove the watermark function layers, instead generate a list of actions to run
 
 # Watermark an image with a given position and color
-def watermark_image_pos_color(image, path, position_str, logo_ss, positioning_data, color, settings, suffix=""):
+def watermark_image_pos_color(image, path, position_str, logo_ss, positioning_data, color_str, settings, suffix=""):
 	# Crop out the area of the watermark and upscale it
 	watermark_canvas = image.crop(box=positioning_data["watermark_bbox"])
 	watermark_canvas_ss = watermark_canvas.resize([settings["ss_factor"] * dim for dim in watermark_canvas.size])
 	
 	# Drawing the circle if requested
 	if settings["draw_circle"]:
-		ImageDraw.Draw(watermark_canvas_ss).ellipse([settings["ss_factor"] * elem for elem in positioning_data["circle_bbox_in_watermark_bbox"]], fill=color)
+		ImageDraw.Draw(watermark_canvas_ss).ellipse([settings["ss_factor"] * elem for elem in positioning_data["circle_bbox_in_watermark_bbox"]], fill=color_str)
 	
 	watermark_canvas_ss.paste(logo_ss, positioning_data["logo_pos_in_watermark_ss_bbox"], logo_ss)
 
@@ -68,18 +69,20 @@ def watermark_image_pos_color(image, path, position_str, logo_ss, positioning_da
 	output_canvas.paste(watermark_canvas, positioning_data["watermark_bbox"][:2])
 
 	# Format suffix
-	if len(suffix):
+	if len(suffix) > 0:
 		suffix = "_" + suffix
 
 	# Save the image
-	fst, snd = path
-	output_canvas.save(fst + "_" + position_str + str(suffix) + "." + snd)
+	path_out = settings["output_path"] / (settings["prefix"] + path.stem + suffix + "." + settings["format"])
+	output_canvas.save(path_out)
 
 # Watermark an image with a given position and a list of colors
-def watermark_image_pos(image, path, position_str, logos_ss, color_list, settings, positioning_data):		
+def watermark_image_pos(image, path, position_str, logos_ss, settings, positioning_data):
+	color_list = color_list_from_setting(settings["color_setting"])
+
 	# Loop through the selected colors
-	for suffix, color in enumerate(color_list):
-		logo_ss = logos_ss["color"] if color == (255, 255, 255) else logos_ss["white"]	
+	for suffix, color_str in enumerate(color_list):
+		logo_ss = logos_ss[get_dict_value_or_none_value(ESN_CIRCLE_COLOR_MAP, color_str)]	
 			
 		# No need for color suffix if only one color
 		if len(color_list) == 1:
@@ -91,7 +94,7 @@ def watermark_image_pos(image, path, position_str, logos_ss, color_list, setting
 									position_str=position_str,
 									logo_ss=logo_ss,
 									positioning_data=positioning_data,
-									color=color,
+									color_str=color_str,
 									settings=settings,
 									suffix=str(suffix))
 		
@@ -132,10 +135,6 @@ def compute_positioning_data(image_size, logo_ss_size, position_str, positioning
 		watermark_bbox_ys[1],
 	]])
 
-	# TODO : Check that these are the same
-	#logo_center_in_watermark_x = circle_bbox_in_watermark_xs[0] + circle_radius - circle_offset_x
-	#logo_center_in_watermark_y = circle_bbox_in_watermark_ys[0] + circle_radius - circle_offset_y
-
 	# Get logo center relative to the watermark
 	logo_center_in_watermark_x = logo_center_x - watermark_bbox_xs[0]
 	logo_center_in_watermark_y = logo_center_y - watermark_bbox_ys[0]
@@ -166,7 +165,7 @@ def compute_positioning_data(image_size, logo_ss_size, position_str, positioning
 	}
 
 # Watermark an image with a list of positions and a list of colors
-def watermark_image(image, path, logos, settings, position_list, color_list):
+def watermark_image(image, path, logos, position_list, settings):
 	# Compute logo dimensions from image dimensions and image-watermark ratio
 	target_logo_w, target_logo_h = logo_dims_from_image_and_ratio(	logo_size=logos["color"].size,
 												 					image_size=image.size,
@@ -175,7 +174,6 @@ def watermark_image(image, path, logos, settings, position_list, color_list):
 	# Get scaled and supersampled logos
 	logos_ss = scale_logos_with_supersampling(	logos=logos,
 										   		target_dims=(target_logo_w, target_logo_h),
-												color_list=color_list,
 												supersampling_factor=settings["ss_factor"])
 
 	# Get logo padding from padding ratio and logo height
@@ -204,7 +202,7 @@ def watermark_image(image, path, logos, settings, position_list, color_list):
 	for position_str in position_list:
 		# Get positioning data
 		positioning_data = compute_positioning_data(image_size=image.size,
-											  		logo_ss_size=logos_ss["color"].size,
+											  		logo_ss_size=get_any_dict_value(logos_ss).size,
 													position_str=position_str,
 													positioning_settings=positioning_settings,
 													settings=settings)
@@ -213,6 +211,7 @@ def watermark_image(image, path, logos, settings, position_list, color_list):
 							path=path,
 							logos_ss=logos_ss,
 							position_str=position_str,
-							color_list=color_list,
 							positioning_data=positioning_data,
 							settings=settings)
+
+# TODO : Code in a check that all logos have the same size

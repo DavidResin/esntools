@@ -7,24 +7,32 @@ import textwrap
 # External libraries
 from PIL import ImageColor
 
-# Color parsing
-def parse_color(args, color_choices):
-	color = args["color"]
+COLOR_OPTIONS = {
+	"white": (255, 255, 255),
+	"black": (0, 0, 0),
+	"magenta": (236, 0, 140),
+	"orange": (244, 123, 32),
+	"green": (122, 193, 67),
+	"cyan": (0, 174, 239),
+	"purple": (46, 49, 146),
+}
 
+# Color parsing
+def color_list_from_setting(color_setting):
 	try:
-		if color == "random":
-			ret = []
-		elif color == "all":
-			ret = list(color_choices.values())
+		if color_setting == "random":
+			ret = [random.choice(list(COLOR_OPTIONS.values()))]
+		elif color_setting == "all":
+			ret = list(COLOR_OPTIONS.values())
 		else:
-			ret = [color_choices.get(color) or ImageColor.getrgb(color)]
+			ret = [COLOR_OPTIONS.get(color_setting) or ImageColor.getrgb(color_setting)]
 	except ValueError:
 		sys.exit("Wrong color format. Official ESN color or #rrggbb hexadecimal format expected.")
 
 	return ret
 
 # Generate list of positions based on arguments
-def get_pos_list(position, position_options):
+def position_list_from_setting(position, position_options):
 	if position == "random":
 		ret = [position_options[random.randint(0, 3)]]
 	elif position == "all":
@@ -34,20 +42,26 @@ def get_pos_list(position, position_options):
 
 	return ret
 
+def get_any_dict_value(dictionary):
+	return next(iter(dictionary.values()))
+
+def get_dict_value_or_none_value(dictionary: dict, key):
+	return dictionary.get(key, dictionary[None])
+
 # Setup argument parser
-def setup_argparser(default_vals, color_choices, pos_choices):
+def setup_argparser(default_vals, color_options, pos_choices):
 	ap = argparse.ArgumentParser(description="ESN Lausanne Watermark Inserter", formatter_class=argparse.RawTextHelpFormatter)
-	ap.add_argument("-f",	"--flush",				action="store_true",														help="flush output folder")
-	ap.add_argument("-np",	"--no-prefix",			action="store_true",														help="do not add a '{}' prefix to outputs".format(default_vals["wm_prefix"]))
-	ap.add_argument("-nr",	"--no-rotate",			action="store_true",														help="do not rotate images if they are not upright")
-	ap.add_argument("-nc",	"--no-circle",			action="store_true",														help="do not add a colored circle behind the logo (not recommended)")
-	ap.add_argument("-cc",	"--center-circle",		action="store_true",														help="center the circle around the logo (not recommended)")
-	ap.add_argument("-i",	"--input",				action="store", type=str,	default=default_vals["input"],					help="set a custom input directory path (default is '{}')".format(default_vals["input"]))
-	ap.add_argument("-o",	"--output",				action="store", type=str,	default=default_vals["output"],					help="set a custom output directory path (default is '{}')".format(default_vals["output"]))
-	ap.add_argument("-wms",	"--watermark-size",		action="store", type=float,	default=default_vals["wm_size"],				help="set the size of the watermark compared to the image's size (default is {})".format(default_vals["wm_size"]))
-	ap.add_argument("-wmr",	"--watermark-ratio",	action="store", type=float,	default=default_vals["wm_ratio"],				help="set the size ratio between the logo's width and the circle's diameter, (default is {})".format(default_vals["wm_ratio"]))
-	ap.add_argument("-wmp",	"--watermark-padding",	action="store", type=float,	default=default_vals["wm_pad"],					help="set the padding between the logo and the edge of the picture, as a ratio of the logo's height (default is {})".format(default_vals["wm_pad"]))
-	ap.add_argument("-ss",  "--supersampling",		action="store", type=int,	default=default_vals["ss"], metavar="FACTOR",	help="set the supersampling factor for smoothing the circle (default is {}, smaller means faster execution but less smoothing)".format(default_vals["ss"]))
+	ap.add_argument("-f",	"--flush",				action="store_true",																help="flush output folder")
+	ap.add_argument("-np",	"--no-prefix",			action="store_true",																help="do not add a '{}' prefix to outputs".format(default_vals["wm_prefix"]))
+	ap.add_argument("-nr",	"--no-rotate",			action="store_true",																help="do not rotate images if they are not upright")
+	ap.add_argument("-nc",	"--no-circle",			action="store_true",																help="do not add a colored circle behind the logo (not recommended)")
+	ap.add_argument("-cc",	"--center-circle",		action="store_true",																help="center the circle around the logo (not recommended)")
+	ap.add_argument("-i",	"--input-dir",			action="store", type=str,	default=default_vals["input_dir"],						help="set a custom input directory path (default is '{}')".format(default_vals["input_dir"]))
+	ap.add_argument("-o",	"--output-dir",			action="store", type=str,	default=default_vals["output_dir"],						help="set a custom output directory path (default is '{}')".format(default_vals["output_dir"]))
+	ap.add_argument("-wms",	"--watermark-size",		action="store", type=float,	default=default_vals["wm_size"],						help="set the size of the watermark compared to the image's size (default is {})".format(default_vals["wm_size"]))
+	ap.add_argument("-wmr",	"--watermark-ratio",	action="store", type=float,	default=default_vals["wm_ratio"],						help="set the size ratio between the logo's width and the circle's diameter, (default is {})".format(default_vals["wm_ratio"]))
+	ap.add_argument("-wmp",	"--watermark-padding",	action="store", type=float,	default=default_vals["wm_pad"],							help="set the padding between the logo and the edge of the picture, as a ratio of the logo's height (default is {})".format(default_vals["wm_pad"]))
+	ap.add_argument("-ss",  "--supersampling",		action="store", type=int,	default=default_vals["ss_factor"], metavar="FACTOR",	help="set the supersampling factor for smoothing the circle (default is {}, smaller means faster execution but less smoothing)".format(default_vals["ss_factor"]))
 	ap.add_argument("-c",	"--color",				action="store",
 													type=str,
 													default="random",

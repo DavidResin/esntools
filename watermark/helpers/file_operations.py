@@ -25,7 +25,7 @@ def glob_all_except(path, base_pattern="*", excluded_patterns=[]):
 	return list(matches)
 
 def extension_match(path, exts):
-    return any([path.suffix.lower() == "." + ext for ext in exts])
+    return path.suffix.lower() in exts
 
 # Flush the output directory
 def flush_output(path_out: Path, exts: tuple[str]) -> None:
