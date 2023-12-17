@@ -27,7 +27,7 @@ if __name__ == "__main__":
 		"wm_prefix":	"wm_",
 		"input": 		"input",
 		"output": 		"output",
-		"format": 		"png"
+		"format": 		"png",
 	}
 
 	# Other parameters
@@ -96,6 +96,7 @@ if __name__ == "__main__":
 	# Apply to all images
 	invalid_count = 0
 
+	# TODO : Condition this
 	# Enable the HEIF/HEIC Pillow plugin
 	register_heif_opener()
 

@@ -48,6 +48,8 @@ def scale_logos_with_supersampling(logos, target_dims, color_list, supersampling
 
 # TODO : SEPARATE THE WATERMARK CANVAS CREATION FROM THE WATERMARKING PROCESS
 
+# TODO : Remove the watermark function layers, instead generate a list of actions to run
+
 # Watermark an image with a given position and color
 def watermark_image_pos_color(image, path, position_str, logo_ss, positioning_data, color, settings, suffix=""):
 	# Crop out the area of the watermark and upscale it
