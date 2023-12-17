@@ -1,38 +1,25 @@
-##################################################
-##												##
-##	File :		watermark.py					##
-##	Author :	David Resin, ESN EPFL			##
-##	Date :		24.05.2022						##
-##	Email :		davidresin@citycable.ch			##
-##	Repo :		github.com/DavidResin/esntools	##
-##												##
-## ============================================ ##
-##												##
-##	HOW TO RUN									##
-##		1 - Install Python 3					##
-##		2 - "cd path/to/the/watermark/folder"	##
-##		3 - "pip install -r requirements.txt"	##
-##		4 - "python watermark.py"				##
-##												##
-##################################################
-
 # Default libraries
-import os
 import random
 import sys
+from pathlib import Path
 
 # External libraries
-from PIL import Image, ImageSequence, UnidentifiedImageError
+from PIL import Image
 from pillow_heif import register_heif_opener
 
-# Custom library
-from helpers import *
+# Custom libraries
+from helpers.image_manipulation import watermark_image
+from helpers.file_operations import create_dir_if_missing, glob_all_except, flush_output, attempt_open_image, EXTS
+from helpers.others import setup_argparser, get_pos_list
 
 # Main code
 if __name__ == "__main__":
 
+	root_path = Path()
+	logo_path = root_path / "logos"
+
 	# Define default values
-	default_vals = {
+	default_values = {
 		"ss": 			2,
 		"wm_size": 		0.07,
 		"wm_ratio": 	1.6,
@@ -44,12 +31,9 @@ if __name__ == "__main__":
 	}
 
 	# Other parameters
-	exts = ('.jpg', '.png', '.jpeg', '.ico', '.webp', '.heic', '.heif')
-	preproc_exts = ('.heic', '.heif')
 	proc_str = "Processing image {} of {} \t({} of {} variations, \tinvalid: {})"
 	end_str = "Processed {} images successfully!"
 	inv_str = " ({} image(s) failed and moved to 'invalid')"
-	path_inv = "invalid"
 	pos_choices = ["bottom_right", "bottom_left", "top_right", "top_left", "random", "all"]
 	color_choices = {
 		"white": (255, 255, 255),
@@ -67,83 +51,60 @@ if __name__ == "__main__":
 
 	# Open logo files
 	logos = {
-		"color": Image.open(os.path.join("logos", fn_color)),
-		"white": Image.open(os.path.join("logos", fn_white))
+		"color": Image.open(logo_path / fn_color),
+		"white": Image.open(logo_path / fn_white)
 	}
 
 	# Setup argparser and parse arguments
-	ap = setup_argparser(default_vals=default_vals, color_choices=color_choices, pos_choices=pos_choices)
+	ap = setup_argparser(default_vals=default_values, color_choices=color_choices, pos_choices=pos_choices)
 	args = vars(ap.parse_args())
 
-	prefix = 	default_vals["wm_prefix"] * (not args["no_prefix"])
-	path_in = 	args["input"]
-	path_out = 	args["output"]
+	prefix = 	default_values["wm_prefix"] * (not args["no_prefix"])
+	path_in = 	root_path / args["input"]
+	path_out = 	root_path / args["output"]
+	path_inv = 	root_path / "invalid"
 	pos = 		args["position"]
 	
+	circle_offset_ratio_x = 3 / 5
+	circle_offset_ratio_y = 1
+	
 	ratios = {
-		"img_wm_ratio": 		args["watermark_size"],
-		"logo_padding_ratio": 	args["watermark_padding"],
-		"logo_circle_ratio": 	args["watermark_ratio"],
-		"circle_shift_ratio_x": 3 / 5,
-		"circle_shift_ratio_y": 1,
-		"ss_factor": 			args["supersampling"]
+		"image_watermark_ratio": 	args["watermark_size"],
+		"logo_padding_ratio": 		args["watermark_padding"],
+		"logo_circle_ratio": 		args["watermark_ratio"],
+		"circle_offset_ratio_x": 	.5 if args["center_circle"] else circle_offset_ratio_x,
+		"circle_offset_ratio_y": 	.5 if args["center_circle"] else circle_offset_ratio_y,
+		"ss_factor": 				args["supersampling"],
+		"draw_circle":				not args["no_circle"],
 	}
 
 	# Create missing folders if needed
 	create_dir_if_missing(path_out)
 	create_dir_if_missing(path_inv)
 
-	# Parse color
-	color_list = parse_color(args, color_choices)
-
 	# Process filenames
-	try:
-		fns = [el for el in os.listdir(path_in) if el != ".gitkeep"]
-	except:
-		create_dir_if_missing(default_vals["input"])
-		sys.exit("Input folder not found. Make sure you arguments are correct or use the default '" + default_vals["input"] + "' folder.")
+	if path_in.is_dir():
+		paths_imgs = glob_all_except(path_in, excluded_patterns=["*.gitkeep"])
+	else:
+		create_dir_if_missing(default_values["input"])
+		sys.exit("Input folder not found. Make sure you arguments are correct or use the default '" + default_values["input"] + "' folder.")
 
 	# Flush all images in the output directory if asked to
 	if args["flush"]:
-		flush_output(path_out, exts)
+		flush_output(path_out, EXTS)
 		
 	# Apply to all images
-	processed_count = 0
 	invalid_count = 0
 
 	# Enable the HEIF/HEIC Pillow plugin
 	register_heif_opener()
 
 	# Loop through images
-	for fn in fns:
-		processed_count += 1
-		
-		# Generate paths
-		file_in = os.path.join(path_in, fn)
-		file_out = os.path.join(path_out, prefix + fn).rsplit(".", 1)
-		
-		# Move picture to 'invalid' if it doesn't have the right file format
-		if not any([fn.lower().endswith(ext) for ext in exts]):
-			invalid_count = invalidate(fn, file_in, path_inv, invalid_count)
+	for processed_count, curr_path_in in enumerate(paths_imgs):
+		image = attempt_open_image(curr_path_in, path_inv, attempt_rotate=not args["no_rotate"])
+
+		if image is None:
 			continue
-
-		# Try to load image
-		try:
-			img = Image.open(file_in)
-		except (FileNotFoundError, UnidentifiedImageError, ValueError) as e:
-			invalid_count = invalidate(fn, file_in, path_inv, invalid_count)
-			continue
-
-		is_hei = False
-
-		# Handle special formats
-		if any([fn.lower().endswith(ext) for ext in preproc_exts]):
-			is_hei = True
-			img = next(ImageSequence.Iterator(img))
-		
-		# For non-HEI file types, try to re-orient the picture if it is allowed and orientation data is available 
-		if not is_hei and not args["no_rotate"] and img._getexif():
-			img = tilt_img(img)
 		
 		# Choose a color for the 'random' case
 		if args["color"] == "random":
@@ -152,10 +113,10 @@ if __name__ == "__main__":
 		# Randomize position if asked
 		pos_list = get_pos_list(pos, pos_choices)
 
-		print("Processing image", processed_count, "of", len(fns), "| Colors:", len(color_list), "| Variations:", len(pos_list), "| Invalid:", invalid_count, end="\r")
+		print("Processing image", processed_count, "of", len(paths_imgs), "| Colors:", len(color_list), "| Variations:", len(pos_list), "| Invalid:", invalid_count, end="\r")
 
 		# Watermark picture
-		watermark_image(img, file_out, logos, ratios, pos_list, color_list, draw_circle=not args["no_circle"], center_circle=args["center_circle"])
+		watermark_image(image, curr_path_in, logos, ratios, pos_list, color_list)
 
 	print()
 	print("Done")
