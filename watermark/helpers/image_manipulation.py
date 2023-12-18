@@ -27,7 +27,8 @@ def tilt_img(image):
 
 	tilt = exif.get(EXIF_ORIENTATION_TAG)
 
-	if tilt is None:
+	# Don't tilt if exif orientation value is not between 1 and 8
+	if tilt is None or tilt not in range(1, 9):
 		return image
 	
 	tilt_idx = TILT_MAP[(tilt - 1) // 2]
