@@ -24,8 +24,8 @@ def glob_all_except(path, base_pattern="*", excluded_patterns=[]):
 
 	return list(matches)
 
-def extension_match(path, exts):
-    return path.suffix.lower() in exts
+def extension_match(image_path, extension_list):
+    return image_path.suffix.lower() in extension_list
 
 # Flush the output directory
 def flush_output(path_out: Path, exts: tuple[str]) -> None:
@@ -34,53 +34,53 @@ def flush_output(path_out: Path, exts: tuple[str]) -> None:
 			deletion_candidate.unlink()
 
 # Move an invalid picture out
-def invalidate_path(path_in, path_inv):
+def invalidate_path(image_path, path_invalid):
 	global INVALID_COUNT
-	shutil.move(path_in, path_inv)
+	shutil.move(image_path, path_invalid)
 	INVALID_COUNT += 1
 	
 # Create a directory if it is missing
-def create_dir_if_missing(path):
+def create_dir_if_missing(dir_path):
 	try:
-		path.mkdir()
+		dir_path.mkdir()
 	except FileExistsError:
 		return True
 
 	return False
 
-def universal_load_image(path_in):
-    if extension_match(path_in, RAWPY_EXTS):
-        image = rp.imread(path_in)
+def universal_load_image(image_path):
+    if extension_match(image_path, RAWPY_EXTS):
+        image = rp.imread(image_path)
         image = image.postprocess(use_camera_wb=True)
         image = Image.fromarray(image)
     else:
-        image = Image.open(path_in)
+        image = Image.open(image_path)
 
     return image
 
-def attempt_open_image_ext_check(path, path_inv):
+def attempt_open_image_ext_check(image_path, path_invalid):
     # Move picture to 'invalid' if it doesn't have the right file format
-    path_is_valid = extension_match(path, EXTS)
+    path_is_valid = extension_match(image_path, EXTS)
     
     if not path_is_valid:
-        invalidate_path(path, path_inv)
+        invalidate_path(image_path, path_invalid)
 
     return path_is_valid
     
-def attempt_open_image_load_image(path, path_inv):
+def attempt_open_image_load_image(image_path, path_inv):
     image = None
 
     # Try to load image
     try:
-        image = universal_load_image(path)
+        image = universal_load_image(image_path)
     except (FileNotFoundError, UnidentifiedImageError, ValueError) as e:
         # TODO : Print out a report on the failure, manage failure behaviour in arguments
-        invalidate_path(path, path_inv)
+        invalidate_path(image_path, path_inv)
 
     return image
 
-def attempt_open_image_hei_process(image, path):
-    is_hei = extension_match(path, HEI_EXTS)
+def attempt_open_image_hei_process(image, image_path):
+    is_hei = extension_match(image_path, HEI_EXTS)
 
     if is_hei:
         image = next(ImageSequence.Iterator(image))
@@ -100,20 +100,20 @@ def attempt_open_image_attempt_tilt(image):
      
     return image
     
-def attempt_open_image(path, path_inv, attempt_rotate):
-    path_is_valid = attempt_open_image_ext_check(path, path_inv)
+def attempt_open_image(image_path, path_invalid, attempt_rotate):
+    path_is_valid = attempt_open_image_ext_check(image_path, path_invalid)
 
     if not path_is_valid:
         return None
     
-    img = attempt_open_image_load_image(path, path_inv)
+    image = attempt_open_image_load_image(image_path, path_invalid)
 
-    if img is None:
+    if image is None:
         return None
 
-    img, is_hei = attempt_open_image_hei_process(img, path)
+    image, is_hei = attempt_open_image_hei_process(image, image_path)
 
     if not is_hei and attempt_rotate:
-        img = attempt_open_image_attempt_tilt(img)
+        image = attempt_open_image_attempt_tilt(image)
 
-    return img
+    return image

@@ -178,7 +178,7 @@ def watermark_image(image, path, logos, position_list, settings):
 
 	# Get logo padding from padding ratio and logo height
 	# TODO : Make this configurable (h or w)
-	logo_padding = settings["logo_padding_ratio"] * target_logo_h
+	logo_padding = target_logo_h * settings["logo_padding_ratio"]
 
 	# Get circle radius from logo width and logo-circle ratio
 	# TODO : Make this configurable (h or w)
