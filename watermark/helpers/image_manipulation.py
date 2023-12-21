@@ -75,11 +75,10 @@ def watermark_image_pos_color(image, path, position_str, logo_ss, positioning_da
 # Watermark an image with a given position and a list of colors
 def watermark_image_pos(image, path, position_str, logos_ss, settings, positioning_data):
 	color_list = color_list_from_setting(settings["color_setting"])
+	logo_ss = logos_ss[get_dict_value_or_none_value(ESN_CIRCLE_COLOR_MAP, settings["color_setting"])]
 
 	# Loop through the selected colors
 	for suffix, color_str in enumerate(color_list):
-		logo_ss = logos_ss[get_dict_value_or_none_value(ESN_CIRCLE_COLOR_MAP, color_str)]	
-			
 		# No need for color suffix if only one color
 		if len(color_list) == 1:
 			suffix = ""
