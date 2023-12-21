@@ -9,14 +9,12 @@ from pillow_heif import register_heif_opener
 # Custom libraries
 from helpers.image_manipulation import watermark_image
 from helpers.file_operations import create_dir_if_missing, glob_all_except, flush_output, attempt_open_image, EXTS
-from helpers.others import setup_argparser, position_list_from_setting, COLOR_OPTIONS
+from helpers.others import setup_argparser, position_list_from_setting, COLOR_OPTIONS, POSITION_OPTIONS
 
 # Main code
 if __name__ == "__main__":
 
 	# TODO : Configure dry run
-	# TODO : Time each part of the code to find optimisation paths
-	# TODO : Parallelise the process
 
 	print("Start")
 
@@ -39,7 +37,6 @@ if __name__ == "__main__":
 	str_process = "Processing image {} of {} \t({} of {} variations, \tinvalid: {})"
 	str_end = "Processed {} images successfully!"
 	str_invalid = " ({} image(s) failed and moved to 'invalid')"
-	POSITION_OPTIONS = ["bottom_right", "bottom_left", "top_right", "top_left", "random", "all"]
 
 	# Names of logo files
 	fn_color = "logo_color.png"
@@ -107,7 +104,7 @@ if __name__ == "__main__":
 			continue
 			
 		# Randomize position if asked
-		position_list = position_list_from_setting(position_setting, POSITION_OPTIONS)
+		position_list = position_list_from_setting(position_setting)
 
 		print("Processing image", processed_count, "of", len(image_paths), "| Variations:", len(position_list), "| Invalid:", invalid_count, end="\r")
 

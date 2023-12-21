@@ -8,14 +8,23 @@ import textwrap
 from PIL import ImageColor
 
 COLOR_OPTIONS = {
-	"white": (255, 255, 255),
-	"black": (0, 0, 0),
-	"magenta": (236, 0, 140),
-	"orange": (244, 123, 32),
-	"green": (122, 193, 67),
-	"cyan": (0, 174, 239),
-	"purple": (46, 49, 146),
+	"white": 	(255, 255, 255),
+	"black": 	(  0,   0,   0),
+	"magenta": 	(236,   0, 140),
+	"orange": 	(244, 123,  32),
+	"green": 	(122, 193,  67),
+	"cyan": 	(  0, 174, 239),
+	"purple": 	( 46,  49, 146),
 }
+
+POSITION_OPTIONS = [
+	"bottom_right",
+	"bottom_left",
+	"top_right",
+	"top_left",
+	"random",
+	"all",
+]
 
 # Color parsing
 def color_list_from_setting(color_setting):
@@ -32,11 +41,11 @@ def color_list_from_setting(color_setting):
 	return ret
 
 # Generate list of positions based on arguments
-def position_list_from_setting(position, position_options):
+def position_list_from_setting(position):
 	if position == "random":
-		ret = [position_options[random.randint(0, 3)]]
+		ret = [POSITION_OPTIONS[random.randint(0, 3)]]
 	elif position == "all":
-		ret = position_options[:4]
+		ret = POSITION_OPTIONS[:4]
 	else:
 		ret = [position]
 

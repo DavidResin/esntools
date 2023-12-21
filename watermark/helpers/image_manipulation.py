@@ -15,7 +15,7 @@ EXIF_ORIENTATION_TAG = 274
 
 ESN_CIRCLE_COLOR_MAP = {
 	"white": "color",
-	None: "white",
+	None:    "white",
 }
 
 # Auromatically tilt an image based on its EXIF data
@@ -46,10 +46,6 @@ def logo_dims_from_image_and_ratio(logo_size, image_size, image_watermark_ratio)
 def scale_logos_with_supersampling(logos, target_dims, supersampling_factor):
 	supersampled_dims = [int(supersampling_factor * dim) for dim in target_dims]
 	return {key: logo.resize(supersampled_dims) for key, logo in logos.items()}
-
-# TODO : SEPARATE THE WATERMARK CANVAS CREATION FROM THE WATERMARKING PROCESS
-
-# TODO : Remove the watermark function layers, instead generate a list of actions to run
 
 # Watermark an image with a given position and color
 def watermark_image_pos_color(image, path, position_str, logo_ss, positioning_data, color_str, settings, suffix=""):
