@@ -71,7 +71,7 @@ def watermark_image_pos_color(image, path, logo_ss, positioning_data, color, set
 
 	# Save the image
 	path_out = settings["output_path"] / (settings["prefix"] + path.stem + suffix + "." + settings["format"])
-	output_canvas.save(path_out)
+	output_canvas.save(path_out, format="png", compress_level=4)
 
 # Watermark an image with a given position and a list of colors
 def watermark_image_pos(image, path, position_str, logos_ss, settings, positioning_data):

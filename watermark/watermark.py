@@ -93,7 +93,7 @@ if __name__ == "__main__":
 	# TODO : Condition this
 	# Enable the HEIF/HEIC Pillow plugin
 	register_heif_opener()
-
+	
 	# Loop through images
 	for processed_count, image_path in enumerate(image_paths):
 		image = attempt_open_image(	image_path=image_path,
