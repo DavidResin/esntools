@@ -86,14 +86,14 @@ if __name__ == "__main__":
 	# Flush all images in the output directory if asked to
 	if args["flush"]:
 		flush_output(path_output, EXTS)
-		
+	
 	# Apply to all images
 	invalid_count = 0
 
 	# TODO : Condition this
 	# Enable the HEIF/HEIC Pillow plugin
 	register_heif_opener()
-	
+
 	# Loop through images
 	for processed_count, image_path in enumerate(image_paths):
 		image = attempt_open_image(	image_path=image_path,
@@ -102,7 +102,7 @@ if __name__ == "__main__":
 
 		if image is None:
 			continue
-			
+		
 		# Randomize position if asked
 		position_list = position_list_from_setting(position_setting)
 
@@ -114,6 +114,6 @@ if __name__ == "__main__":
 						logos=logos,
 						position_list=position_list,
 						settings=settings)
-
+	
 	print()
 	print("Done")
