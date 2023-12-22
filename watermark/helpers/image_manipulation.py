@@ -2,7 +2,7 @@
 from PIL import ImageDraw
 
 # Custom libraries
-from helpers.others import get_any_dict_value, get_dict_value_or_none_value, color_list_from_setting
+from helpers.others import get_any_dict_value, get_dict_value_or_none_value, color_mapping_from_setting
 
 TILT_MAP = {
 	0: 0,
@@ -27,7 +27,8 @@ def tilt_img(image):
 
 	tilt = exif.get(EXIF_ORIENTATION_TAG)
 
-	if tilt is None:
+	# Don't tilt if exif orientation value is not between 1 and 8
+	if tilt is None or tilt not in range(1, 9):
 		return image
 	
 	tilt_idx = TILT_MAP[(tilt - 1) // 2]
@@ -48,14 +49,14 @@ def scale_logos_with_supersampling(logos, target_dims, supersampling_factor):
 	return {key: logo.resize(supersampled_dims) for key, logo in logos.items()}
 
 # Watermark an image with a given position and color
-def watermark_image_pos_color(image, path, position_str, logo_ss, positioning_data, color_str, settings, suffix=""):
+def watermark_image_pos_color(image, path, logo_ss, positioning_data, color, settings, suffix=""):
 	# Crop out the area of the watermark and upscale it
 	watermark_canvas = image.crop(box=positioning_data["watermark_bbox"])
 	watermark_canvas_ss = watermark_canvas.resize([settings["ss_factor"] * dim for dim in watermark_canvas.size])
 	
 	# Drawing the circle if requested
 	if settings["draw_circle"]:
-		ImageDraw.Draw(watermark_canvas_ss).ellipse([settings["ss_factor"] * elem for elem in positioning_data["circle_bbox_in_watermark_bbox"]], fill=color_str)
+		ImageDraw.Draw(watermark_canvas_ss).ellipse([settings["ss_factor"] * elem for elem in positioning_data["circle_bbox_in_watermark_bbox"]], fill=color)
 	
 	watermark_canvas_ss.paste(logo_ss, positioning_data["logo_pos_in_watermark_ss_bbox"], logo_ss)
 
@@ -74,22 +75,22 @@ def watermark_image_pos_color(image, path, position_str, logo_ss, positioning_da
 
 # Watermark an image with a given position and a list of colors
 def watermark_image_pos(image, path, position_str, logos_ss, settings, positioning_data):
-	color_list = color_list_from_setting(settings["color_setting"])
-	logo_ss = logos_ss[get_dict_value_or_none_value(ESN_CIRCLE_COLOR_MAP, settings["color_setting"])]
-
+	color_mapping = color_mapping_from_setting(settings["color_setting"])
+	
 	# Loop through the selected colors
-	for suffix, color_str in enumerate(color_list):
+	for suffix, (color_name, color) in enumerate(color_mapping.items()):
 		# No need for color suffix if only one color
-		if len(color_list) == 1:
+		if len(color_mapping) == 1:
 			suffix = ""
+
+		logo_ss = logos_ss[get_dict_value_or_none_value(ESN_CIRCLE_COLOR_MAP, color_name)]
 
 		# Watermark picture
 		watermark_image_pos_color(	image=image,
 									path=path,
-									position_str=position_str,
 									logo_ss=logo_ss,
 									positioning_data=positioning_data,
-									color_str=color_str,
+									color=color,
 									settings=settings,
 									suffix=str(suffix))
 		

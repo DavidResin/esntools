@@ -27,18 +27,30 @@ POSITION_OPTIONS = [
 ]
 
 # Color parsing
-def color_list_from_setting(color_setting):
-	try:
-		if color_setting == "random":
-			ret = [random.choice(list(COLOR_OPTIONS.values()))]
-		elif color_setting == "all":
-			ret = list(COLOR_OPTIONS.values())
-		else:
-			ret = [COLOR_OPTIONS.get(color_setting) or ImageColor.getrgb(color_setting)]
-	except ValueError:
-		sys.exit("Wrong color format. Official ESN color or #rrggbb hexadecimal format expected.")
+def color_names_list_from_setting(color_setting):
+	if color_setting == "random":
+		return [random.choice(list(COLOR_OPTIONS.keys()))]
+	elif color_setting == "all":
+		return list(COLOR_OPTIONS.keys())
+	else:
+		return [color_setting]
 
-	return ret
+def color_mapping_from_setting(color_setting):
+	ret = dict()
+
+	for color_name in color_names_list_from_setting(color_setting):
+		color = COLOR_OPTIONS.get(color_name)
+
+		if color is None:
+			try:
+				print(color_name, color)
+				color = ImageColor.getrgb(color_name)				
+			except ValueError:
+				sys.exit("Wrong color format. Official ESN color or #rrggbb hexadecimal format expected.")
+
+		ret[color_name] = color
+	
+	return ret	
 
 # Generate list of positions based on arguments
 def position_list_from_setting(position):

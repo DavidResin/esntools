@@ -106,7 +106,7 @@ if __name__ == "__main__":
 		# Randomize position if asked
 		position_list = position_list_from_setting(position_setting)
 
-		print("Processing image", processed_count + 1, "of", len(image_paths), "| Variations:", len(position_list), "| Invalid:", invalid_count, end="\r")
+		print("Processing image", processed_count + 1, "of", len(image_paths), "| Invalid:", invalid_count, end="\r")
 
 		# Watermark picture
 		watermark_image(image=image,
