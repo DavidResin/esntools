@@ -44,57 +44,93 @@ def logo_dims_from_image_and_ratio(logo_size, image_size, image_watermark_ratio)
 
 	return tgt_logo_w, tgt_logo_h
 
-def scale_logos_with_supersampling(logos, target_dims, supersampling_factor):
-	supersampled_dims = [int(supersampling_factor * dim) for dim in target_dims]
-	return {key: logo.resize(supersampled_dims) for key, logo in logos.items()}
+def nearest_integer_scale(values, scale_factor):
+	return [int(scale_factor * value) for value in values]
+
+def scale_logos_with_supersampling(logos, target_dims, ss_factor=1):
+	ss_dims = nearest_integer_scale(target_dims, scale_factor=ss_factor)
+	return {key: logo.resize(ss_dims) for key, logo in logos.items()}
+
+def crop_image_with_supersampling(image, bbox, ss_factor=1):
+	crop = image.crop(box=bbox)
+	ss_dims = nearest_integer_scale(crop.size, scale_factor=ss_factor)
+	return crop.resize(ss_dims)
+
+def draw_ellipse_with_supersampling(image, bbox, color, ss_factor=1):
+	ss_bbox = nearest_integer_scale(bbox, scale_factor=ss_factor)
+	ImageDraw.Draw(image).ellipse(ss_bbox, fill=color)
+	return image
+
+def dims_from_bbox(bbox):
+	x0, y0, x1, y1 = bbox
+	return x1 - x0, y1 - y0
+
+def resize_to_bbox_size(image, bbox):
+	dims = dims_from_bbox(bbox)
+	return image.resize(dims)
+
+def paste_image_on_image_at_bbox(image, pasted_image, bbox, copy_image=False):
+	new_image = image.copy() if copy_image else image
+	mask = pasted_image if pasted_image.mode == "RGBA" else None
+	new_image.paste(pasted_image, bbox[:2], mask)
+	return new_image
 
 # Watermark an image with a given position and color
-def watermark_image_pos_color(image, path, logo_ss, positioning_data, color, settings, suffix=""):
-	# Crop out the area of the watermark and upscale it
-	watermark_canvas = image.crop(box=positioning_data["watermark_bbox"])
-	watermark_canvas_ss = watermark_canvas.resize([settings["ss_factor"] * dim for dim in watermark_canvas.size])
+def watermark_image_sub(image, logo_ss, circle_color, ss_factor, positioning_data):
+	watermark_canvas_ss = crop_image_with_supersampling(image,
+											   			bbox=positioning_data["watermark_bbox"],
+														ss_factor=ss_factor)
 	
-	# Drawing the circle if requested
-	if settings["draw_circle"]:
-		ImageDraw.Draw(watermark_canvas_ss).ellipse([settings["ss_factor"] * elem for elem in positioning_data["circle_bbox_in_watermark_bbox"]], fill=color)
+	if circle_color is not None:
+		watermark_canvas_ss = draw_ellipse_with_supersampling(	watermark_canvas_ss,
+																bbox=positioning_data["circle_bbox_in_watermark_bbox"],
+																color=circle_color,
+																ss_factor=ss_factor)
 	
-	watermark_canvas_ss.paste(logo_ss, positioning_data["logo_pos_in_watermark_ss_bbox"], logo_ss)
+	watermark_canvas_ss = paste_image_on_image_at_bbox(	watermark_canvas_ss,
+														pasted_image=logo_ss,
+														bbox=positioning_data["logo_pos_in_watermark_ss_bbox"])
 
-	# Downscale the watermark area back to its normal size then paste it on the full image
-	watermark_canvas = watermark_canvas_ss.resize(watermark_canvas.size)
-	output_canvas = image.copy()
-	output_canvas.paste(watermark_canvas, positioning_data["watermark_bbox"][:2])
-
-	# Format suffix
-	if len(suffix) > 0:
-		suffix = "_" + suffix
-
-	# Save the image
-	path_out = settings["output_path"] / (settings["prefix"] + path.stem + suffix + "." + settings["format"])
-	output_canvas.save(path_out, format="png", compress_level=4)
+	watermark_canvas = resize_to_bbox_size(	watermark_canvas_ss,
+								   			bbox=positioning_data["watermark_bbox"])
+	
+	watermarked_image = paste_image_on_image_at_bbox(	image,
+											   		pasted_image=watermark_canvas,
+											   		bbox=positioning_data["watermark_bbox"],
+													copy_image=True)
+	
+	return watermarked_image
 
 # Watermark an image with a given position and a list of colors
-def watermark_image_pos(image, path, position_str, logos_ss, settings, positioning_data):
+def watermark_image_pos(image, path, logos_ss, settings, positioning_data):
 	color_mapping = color_mapping_from_setting(settings["color_setting"])
 	
 	# Loop through the selected colors
-	for suffix, (color_name, color) in enumerate(color_mapping.items()):
-		# No need for color suffix if only one color
-		if len(color_mapping) == 1:
-			suffix = ""
+	for i, (color_name, color) in enumerate(color_mapping.items()):
 
 		logo_ss = logos_ss[get_dict_value_or_none_value(ESN_CIRCLE_COLOR_MAP, color_name)]
+		circle_color = color if settings["draw_circle"] else None
 
-		# Watermark picture
-		watermark_image_pos_color(	image=image,
-									path=path,
-									logo_ss=logo_ss,
-									positioning_data=positioning_data,
-									color=color,
-									settings=settings,
-									suffix=str(suffix))
+		# image
+		# logo color key
+		# circle color
+		# ss_factor
+		# positioning data
+		watermarked_image = watermark_image_sub(image,
+												logo_ss=logo_ss,
+												circle_color=circle_color,
+												ss_factor=settings["ss_factor"],
+												positioning_data=positioning_data)
 		
-def compute_positioning_data(image_size, logo_ss_size, position_str, positioning_settings, settings):
+		if len(color_mapping) == 1:
+			suffix = ""
+		else:
+			suffix = "_" + str(i)
+
+		path_out = settings["output_path"] / (settings["prefix"] + path.stem + suffix + "." + settings["format"])
+		watermarked_image.save(path_out, format="png", compress_level=4)
+		
+def compute_positioning_data(image_size, logo_ss_size, position_str, positioning_settings, ss_factor):
 	image_w, image_h = image_size
 	logo_ss_w, logo_ss_h = logo_ss_size
 
@@ -136,8 +172,8 @@ def compute_positioning_data(image_size, logo_ss_size, position_str, positioning
 	logo_center_in_watermark_y = logo_center_y - watermark_bbox_ys[0]
 
 	# Get logo top-left corner relative to supersampled watermark
-	logo_pos_in_watermark_ss_x = int(settings["ss_factor"] * logo_center_in_watermark_x - logo_ss_w / 2)
-	logo_pos_in_watermark_ss_y = int(settings["ss_factor"] * logo_center_in_watermark_y - logo_ss_h / 2)
+	logo_pos_in_watermark_ss_x = int(ss_factor * logo_center_in_watermark_x - logo_ss_w / 2)
+	logo_pos_in_watermark_ss_y = int(ss_factor * logo_center_in_watermark_y - logo_ss_h / 2)
 
 	# Get circle sub-bounding box
 	circle_bbox_in_watermark_xs = [x - watermark_bbox_xs[0] for x in circle_bbox_xs]
@@ -170,7 +206,7 @@ def watermark_image(image, path, logos, position_list, settings):
 	# Get scaled and supersampled logos
 	logos_ss = scale_logos_with_supersampling(	logos=logos,
 										   		target_dims=(target_logo_w, target_logo_h),
-												supersampling_factor=settings["ss_factor"])
+												ss_factor=settings["ss_factor"])
 
 	# Get logo padding from padding ratio and logo height
 	# TODO : Make this configurable (h or w)
@@ -201,12 +237,11 @@ def watermark_image(image, path, logos, position_list, settings):
 											  		logo_ss_size=get_any_dict_value(logos_ss).size,
 													position_str=position_str,
 													positioning_settings=positioning_settings,
-													settings=settings)
+													ss_factor=settings["ss_factor"])
 
 		watermark_image_pos(image=image,
 							path=path,
 							logos_ss=logos_ss,
-							position_str=position_str,
 							positioning_data=positioning_data,
 							settings=settings)
 
