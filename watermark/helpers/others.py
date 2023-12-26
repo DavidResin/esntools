@@ -63,12 +63,6 @@ def position_list_from_setting(position):
 
 	return ret
 
-def get_any_dict_value(dictionary):
-	return next(iter(dictionary.values()))
-
-def get_dict_value_or_none_value(dictionary: dict, key):
-	return dictionary.get(key, dictionary[None])
-
 # Setup argument parser
 def setup_argparser(default_vals, color_options, pos_choices):
 	ap = argparse.ArgumentParser(description="ESN Lausanne Watermark Inserter", formatter_class=argparse.RawTextHelpFormatter)

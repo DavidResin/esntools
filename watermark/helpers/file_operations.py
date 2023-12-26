@@ -88,7 +88,7 @@ def attempt_open_image_hei_process(image, image_path):
     return image, is_hei
 
 def attempt_open_image_attempt_tilt(image):
-    # TODO : Implement no-tilt option in CLI argumetents
+    # TODO : Implement no-tilt option in CLI arguments
     # For non-HEI file types, try to re-orient the picture if it is allowed and orientation data is available 
     try:
         # TODO : Potentiellement getexif existe partout alors que _getexif pas

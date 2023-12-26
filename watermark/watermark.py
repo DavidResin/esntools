@@ -8,8 +8,20 @@ from pillow_heif import register_heif_opener
 
 # Custom libraries
 from helpers.image_manipulation import watermark_image
-from helpers.file_operations import create_dir_if_missing, glob_all_except, flush_output, attempt_open_image, EXTS
-from helpers.others import setup_argparser, position_list_from_setting, COLOR_OPTIONS, POSITION_OPTIONS
+from helpers.file_operations import (
+    create_dir_if_missing,
+    glob_all_except,
+    flush_output,
+    attempt_open_image,
+    EXTS
+)
+from helpers.others import ( # Needs to become a * import
+	setup_argparser,
+	position_list_from_setting,
+	color_mapping_from_setting,
+	COLOR_OPTIONS,
+	POSITION_OPTIONS
+)
 
 # Main code
 if __name__ == "__main__":
@@ -94,6 +106,10 @@ if __name__ == "__main__":
 	# Enable the HEIF/HEIC Pillow plugin
 	register_heif_opener()
 
+	import time
+
+	t0 = time.time()
+
 	# Loop through images
 	for processed_count, image_path in enumerate(image_paths):
 		image = attempt_open_image(	image_path=image_path,
@@ -105,15 +121,19 @@ if __name__ == "__main__":
 		
 		# Randomize position if asked
 		position_list = position_list_from_setting(position_setting)
+		color_mapping = color_mapping_from_setting(settings["color_setting"])
 
 		print("Processing image", processed_count + 1, "of", len(image_paths), "| Invalid:", invalid_count, end="\r")
 
 		# Watermark picture
-		watermark_image(image=image,
+		watermark_image(image,
 				  		path=image_path,
 						logos=logos,
 						position_list=position_list,
 						settings=settings)
+
+	t1 = time.time()
 	
 	print()
+	print(t1 - t0)
 	print("Done")

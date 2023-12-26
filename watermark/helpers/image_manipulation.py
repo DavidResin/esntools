@@ -2,7 +2,7 @@
 from PIL import ImageDraw
 
 # Custom libraries
-from helpers.others import get_any_dict_value, get_dict_value_or_none_value, color_mapping_from_setting
+from helpers.others import color_mapping_from_setting # Needs to disappear
 
 TILT_MAP = {
 	0: 0,
@@ -17,6 +17,12 @@ ESN_CIRCLE_COLOR_MAP = {
 	"white": "color",
 	None:    "white",
 }
+
+def get_any_dict_value(dictionary):
+	return next(iter(dictionary.values()))
+
+def get_dict_value_or_none_value(dictionary: dict, key):
+	return dictionary.get(key, dictionary[None])
 
 # Auromatically tilt an image based on its EXIF data
 def tilt_img(image):
@@ -76,7 +82,7 @@ def paste_image_on_image_at_bbox(image, pasted_image, bbox, copy_image=False):
 	return new_image
 
 # Watermark an image with a given position and color
-def watermark_image_sub(image, logo_ss, circle_color, ss_factor, positioning_data):
+def generate_watermarked_image(image, logo_ss, circle_color, ss_factor, positioning_data):
 	watermark_canvas_ss = crop_image_with_supersampling(image,
 											   			bbox=positioning_data["watermark_bbox"],
 														ss_factor=ss_factor)
@@ -101,6 +107,11 @@ def watermark_image_sub(image, logo_ss, circle_color, ss_factor, positioning_dat
 	
 	return watermarked_image
 
+from multiprocessing import Process
+
+def temp_save_image(image, path):
+	image.save(path, format="png", compress_level=4)
+
 # Watermark an image with a given position and a list of colors
 def watermark_image_pos(image, path, logos_ss, settings, positioning_data):
 	color_mapping = color_mapping_from_setting(settings["color_setting"])
@@ -116,19 +127,33 @@ def watermark_image_pos(image, path, logos_ss, settings, positioning_data):
 		# circle color
 		# ss_factor
 		# positioning data
-		watermarked_image = watermark_image_sub(image,
-												logo_ss=logo_ss,
-												circle_color=circle_color,
-												ss_factor=settings["ss_factor"],
-												positioning_data=positioning_data)
+		watermarked_image = generate_watermarked_image(	image,
+														logo_ss=logo_ss,
+														circle_color=circle_color,
+														ss_factor=settings["ss_factor"],
+														positioning_data=positioning_data)
 		
 		if len(color_mapping) == 1:
 			suffix = ""
 		else:
 			suffix = "_" + str(i)
 
-		path_out = settings["output_path"] / (settings["prefix"] + path.stem + suffix + "." + settings["format"])
-		watermarked_image.save(path_out, format="png", compress_level=4)
+		mp = False
+
+		if mp:
+			procs = []
+
+			for i in range(4):
+				path_out = settings["output_path"] / (settings["prefix"] + path.stem + suffix + "_" + str(i) + "." + settings["format"])
+				proc = Process(target=temp_save_image, args=(watermarked_image, path_out))
+				procs.append(proc)
+				proc.start()
+			for proc in procs:
+				proc.join()
+		else:
+			path_out = settings["output_path"] / (settings["prefix"] + path.stem + suffix + "." + settings["format"])
+			watermarked_image.save(path_out, format="png", compress_level=4)
+
 		
 def compute_positioning_data(image_size, logo_ss_size, position_str, positioning_settings, ss_factor):
 	image_w, image_h = image_size
@@ -239,10 +264,10 @@ def watermark_image(image, path, logos, position_list, settings):
 													positioning_settings=positioning_settings,
 													ss_factor=settings["ss_factor"])
 
-		watermark_image_pos(image=image,
+		watermark_image_pos(image,
 							path=path,
 							logos_ss=logos_ss,
 							positioning_data=positioning_data,
 							settings=settings)
 
-# TODO : Code in a check that all logos have the same size
+# TODO : Code in a check that all logos have the same size (no, make it so that the logo size does not matter, do things per logo)
