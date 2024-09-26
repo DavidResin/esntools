@@ -1,9 +1,6 @@
 # Ignore all Python and Jupyter cache files
-.ipynb_checkpoints
-__pycache__
-
-# Ignore all scraper output
-scrape/data/*
+.ipynb_checkpoints/
+__pycache__/
 
 # Ignore all watermark images
 watermark/input/*

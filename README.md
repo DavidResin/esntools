@@ -1,13 +1,13 @@
 # esntools
-TODO
+Various tools to automate processes for ESN.  
 
-## titanic-pass
+## section-count
+Automatic section counter using the website of ESN International.  
 
 ## watermark
-
-## wiki-scrape
+Watermarking utility for pictures.  
 
 # Credits
 
-© 2020-2022 David Resin and other members of ESN Lausanne  
-This project is freely available under a GNU GPLv3 license.
+© 2020-2024 David Resin and other members of ESN Lausanne  
+This project is freely available under a GNU GPLv3 license.  
