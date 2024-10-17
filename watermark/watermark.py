@@ -15,6 +15,7 @@ from helpers.file_operations import (
     attempt_open_image,
     EXTS
 )
+
 from helpers.others import ( # Needs to become a * import
 	setup_argparser,
 	position_list_from_setting,
@@ -106,16 +107,11 @@ if __name__ == "__main__":
 	# Enable the HEIF/HEIC Pillow plugin
 	register_heif_opener()
 
-	import time
-
-	t0 = time.time()
-
 	# Loop through images
 	for processed_count, image_path in enumerate(image_paths):
 		image = attempt_open_image(	image_path=image_path,
 							 		path_invalid=path_invalid,
 									attempt_rotate=not args["no_rotate"])
-
 		if image is None:
 			continue
 		
@@ -131,9 +127,6 @@ if __name__ == "__main__":
 						logos=logos,
 						position_list=position_list,
 						settings=settings)
-
-	t1 = time.time()
 	
 	print()
-	print(t1 - t0)
 	print("Done")

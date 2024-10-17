@@ -7,6 +7,7 @@ import textwrap
 # External libraries
 from PIL import ImageColor
 
+
 COLOR_OPTIONS = {
 	"white": 	(255, 255, 255),
 	"black": 	(  0,   0,   0),
@@ -26,6 +27,7 @@ POSITION_OPTIONS = [
 	"all",
 ]
 
+
 # Color parsing
 def color_names_list_from_setting(color_setting):
 	if color_setting == "random":
@@ -34,6 +36,7 @@ def color_names_list_from_setting(color_setting):
 		return list(COLOR_OPTIONS.keys())
 	else:
 		return [color_setting]
+
 
 def color_mapping_from_setting(color_setting):
 	ret = dict()
@@ -52,6 +55,7 @@ def color_mapping_from_setting(color_setting):
 	
 	return ret	
 
+
 # Generate list of positions based on arguments
 def position_list_from_setting(position):
 	if position == "random":
@@ -62,6 +66,7 @@ def position_list_from_setting(position):
 		ret = [position]
 
 	return ret
+
 
 # Setup argument parser
 def setup_argparser(default_vals, color_options, pos_choices):

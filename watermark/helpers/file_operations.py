@@ -9,11 +9,13 @@ from PIL import Image, ImageSequence, UnidentifiedImageError
 # Custom libraries
 from helpers.image_manipulation import tilt_img
 
+
 EXTS = ('.jpg', '.png', '.jpeg', '.ico', '.webp', '.heic', '.heif', '.nef')
 HEI_EXTS = ('.heic', '.heif')
 RAWPY_EXTS = ('.nef')
 
 INVALID_COUNT = 0
+
 
 # Glob all filenames in a given path with a given pattern, but exclude the patterns in the exclusion list
 def glob_all_except(path, base_pattern="*", excluded_patterns=[]):
@@ -24,8 +26,10 @@ def glob_all_except(path, base_pattern="*", excluded_patterns=[]):
 
 	return list(matches)
 
+
 def extension_match(image_path, extension_list):
     return image_path.suffix.lower() in extension_list
+
 
 # Flush the output directory
 def flush_output(path_out: Path, exts: tuple[str]) -> None:
@@ -33,12 +37,14 @@ def flush_output(path_out: Path, exts: tuple[str]) -> None:
 		if extension_match(deletion_candidate, exts):
 			deletion_candidate.unlink()
 
+
 # Move an invalid picture out
 def invalidate_path(image_path, path_invalid):
 	global INVALID_COUNT
 	shutil.move(image_path, path_invalid)
 	INVALID_COUNT += 1
-	
+
+
 # Create a directory if it is missing
 def create_dir_if_missing(dir_path):
 	try:
@@ -47,6 +53,7 @@ def create_dir_if_missing(dir_path):
 		return True
 
 	return False
+
 
 def universal_load_image(image_path):
     if extension_match(image_path, RAWPY_EXTS):
@@ -58,6 +65,7 @@ def universal_load_image(image_path):
 
     return image
 
+
 def attempt_open_image_ext_check(image_path, path_invalid):
     # Move picture to 'invalid' if it doesn't have the right file format
     path_is_valid = extension_match(image_path, EXTS)
@@ -66,7 +74,8 @@ def attempt_open_image_ext_check(image_path, path_invalid):
         invalidate_path(image_path, path_invalid)
 
     return path_is_valid
-    
+
+
 def attempt_open_image_load_image(image_path, path_inv):
     image = None
 
@@ -79,6 +88,7 @@ def attempt_open_image_load_image(image_path, path_inv):
 
     return image
 
+
 def attempt_open_image_hei_process(image, image_path):
     is_hei = extension_match(image_path, HEI_EXTS)
 
@@ -86,6 +96,7 @@ def attempt_open_image_hei_process(image, image_path):
         image = next(ImageSequence.Iterator(image))
 
     return image, is_hei
+
 
 def attempt_open_image_attempt_tilt(image):
     # TODO : Implement no-tilt option in CLI arguments
@@ -99,7 +110,8 @@ def attempt_open_image_attempt_tilt(image):
         pass
      
     return image
-    
+
+
 def attempt_open_image(image_path, path_invalid, attempt_rotate):
     path_is_valid = attempt_open_image_ext_check(image_path, path_invalid)
 
