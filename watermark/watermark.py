@@ -13,7 +13,7 @@ from helpers.file_operations import (
     glob_all_except,
     flush_output,
     attempt_open_image,
-    EXTS
+    IMG_EXTS
 )
 
 from helpers.others import ( # Needs to become a * import
@@ -112,6 +112,7 @@ if __name__ == "__main__":
 		image = attempt_open_image(	image_path=image_path,
 							 		path_invalid=path_invalid,
 									attempt_rotate=not args["no_rotate"])
+		
 		if image is None:
 			continue
 		

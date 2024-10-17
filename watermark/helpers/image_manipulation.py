@@ -131,11 +131,6 @@ def watermark_image_pos(image, path, logos_ss, settings, positioning_data):
 		logo_ss = logos_ss[get_dict_value_or_none_value(ESN_CIRCLE_COLOR_MAP, color_name)]
 		circle_color = color if settings["draw_circle"] else None
 
-		# image
-		# logo color key
-		# circle color
-		# ss_factor
-		# positioning data
 		watermarked_image = generate_watermarked_image(	image,
 														logo_ss=logo_ss,
 														circle_color=circle_color,
