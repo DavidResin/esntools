@@ -1,13 +1,8 @@
-# esntools
-Various tools to automate processes for ESN.  
+# Script de watermarking pour ESN
+Par David Resin, ESN EPF Lausanne, 2021-2024
+[ESNTools sur GitHub](https://www.github.com/DavidResin/esntools)
 
-## section-count
-Automatic section counter using the website of ESN International.  
+## Avant l'utilisation
 
-## watermark
-Watermarking utility for pictures.  
-
-# Credits
-
-© 2020-2024 David Resin and other members of ESN Lausanne  
-This project is freely available under a GNU GPLv3 license.  
+1. Installer Python 3
+2. Exécuter `pip install -r requirements.txt`
